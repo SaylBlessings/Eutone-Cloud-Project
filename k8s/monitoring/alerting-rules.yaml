@@ -1,0 +1,73 @@
+---
+# ============================================================
+# PrometheusRule — alerting rules for the ecommerce app
+# ============================================================
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: ecommerce-alerts
+  namespace: monitoring
+  labels:
+    release: prometheus    # must match kube-prometheus-stack release name
+spec:
+  groups:
+    - name: ecommerce.availability
+      interval: 30s
+      rules:
+        - alert: EcommerceAppDown
+          expr: up{namespace="ecommerce", job="ecommerce-service"} == 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "E-commerce application is down"
+            description: "No ecommerce pods are reachable for more than 1 minute."
+
+        - alert: EcommercePodCrashLooping
+          expr: |
+            rate(kube_pod_container_status_restarts_total{namespace="ecommerce"}[5m]) > 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Pod {{ $labels.pod }} is crash-looping"
+            description: "Container {{ $labels.container }} in pod {{ $labels.pod }} has been restarting."
+
+    - name: ecommerce.performance
+      interval: 60s
+      rules:
+        - alert: EcommerceHighCPU
+          expr: |
+            sum(rate(container_cpu_usage_seconds_total{namespace="ecommerce", container="ecommerce"}[5m]))
+            / sum(kube_pod_container_resource_limits{namespace="ecommerce", container="ecommerce", resource="cpu"}) > 0.8
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "E-commerce CPU usage is high"
+            description: "CPU usage exceeds 80% of the limit for more than 5 minutes."
+
+        - alert: EcommerceHighMemory
+          expr: |
+            sum(container_memory_working_set_bytes{namespace="ecommerce", container="ecommerce"})
+            / sum(kube_pod_container_resource_limits{namespace="ecommerce", container="ecommerce", resource="memory"}) > 0.8
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "E-commerce memory usage is high"
+            description: "Memory usage exceeds 80% of the limit for more than 5 minutes."
+
+    - name: ecommerce.scalability
+      interval: 60s
+      rules:
+        - alert: EcommerceHPAMaxedOut
+          expr: |
+            kube_horizontalpodautoscaler_status_current_replicas{namespace="ecommerce", horizontalpodautoscaler="ecommerce-hpa"}
+            >= kube_horizontalpodautoscaler_spec_max_replicas{namespace="ecommerce", horizontalpodautoscaler="ecommerce-hpa"}
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "HPA has reached maximum replicas"
+            description: "The ecommerce HPA has been at max replicas for 10 minutes. Consider increasing maxReplicas."

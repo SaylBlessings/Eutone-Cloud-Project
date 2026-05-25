@@ -1,0 +1,26 @@
+---
+# ============================================================
+# ConfigMap — non-sensitive application configuration
+# ============================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ecommerce-config
+  namespace: ecommerce
+  labels:
+    app: ecommerce
+    tier: frontend
+data:
+  APP_ENV: "production"
+  APP_PORT: "3000"
+  LOG_LEVEL: "info"
+  # Replace with your actual database host
+  DB_HOST: "ecommerce-db-service"
+  DB_PORT: "5432"
+  DB_NAME: "ecommerce"
+  # Cache
+  REDIS_HOST: "ecommerce-redis-service"
+  REDIS_PORT: "6379"
+  # Metrics
+  METRICS_ENABLED: "true"
+  METRICS_PATH: "/metrics"

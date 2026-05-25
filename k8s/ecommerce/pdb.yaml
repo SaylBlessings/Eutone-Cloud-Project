@@ -1,0 +1,18 @@
+---
+# ============================================================
+# PodDisruptionBudget — ensure minimum availability during
+# voluntary disruptions (node drains, upgrades)
+# ============================================================
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ecommerce-pdb
+  namespace: ecommerce
+  labels:
+    app: ecommerce
+spec:
+  minAvailable: 1     # always keep at least 1 pod running
+  selector:
+    matchLabels:
+      app: ecommerce
+      tier: frontend

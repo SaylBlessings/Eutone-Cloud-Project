@@ -1,0 +1,121 @@
+# ============================================================
+# Prometheus — kube-prometheus-stack Helm values (Minikube)
+# Chart: prometheus-community/kube-prometheus-stack
+# ============================================================
+
+nameOverride: ""
+fullnameOverride: ""
+
+# ---- Prometheus server ----
+prometheus:
+  enabled: true
+  prometheusSpec:
+    # Retain 15 days of metrics
+    retention: 15d
+    retentionSize: "8GB"
+
+    # Scrape interval
+    scrapeInterval: "30s"
+    evaluationInterval: "30s"
+
+    # Resource limits suitable for Minikube
+    resources:
+      requests:
+        cpu: "200m"
+        memory: "512Mi"
+      limits:
+        cpu: "500m"
+        memory: "1Gi"
+
+    # Storage — PVC for persistence
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: standard   # Minikube default storage class
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 10Gi
+
+    # Discover PodMonitors & ServiceMonitors across all namespaces
+    podMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorNamespaceSelector: {}
+    serviceMonitorNamespaceSelector: {}
+    podMonitorSelector: {}
+    serviceMonitorSelector: {}
+
+    # Security context
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 65534
+      fsGroup: 65534
+
+  service:
+    type: ClusterIP
+    port: 9090
+
+# ---- Alertmanager ----
+alertmanager:
+  enabled: true
+  alertmanagerSpec:
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "64Mi"
+      limits:
+        cpu: "100m"
+        memory: "128Mi"
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: standard
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 2Gi
+
+# ---- Grafana — disable here; managed separately ----
+grafana:
+  enabled: false
+
+# ---- Node Exporter — collects node metrics ----
+nodeExporter:
+  enabled: true
+
+# ---- kube-state-metrics — collects k8s object metrics ----
+kubeStateMetrics:
+  enabled: true
+
+# ---- Rules ----
+defaultRules:
+  create: true
+  rules:
+    alertmanager: true
+    etcd: false           # not available in Minikube
+    configReloaders: true
+    general: true
+    k8s: true
+    kubeApiserverAvailability: true
+    kubeApiserverBurnrate: true
+    kubeApiserverHistogram: true
+    kubeApiserverSlos: true
+    kubelet: true
+    kubeProxy: false      # not available in Minikube
+    kubePrometheusGeneral: true
+    kubePrometheusNodeRecording: true
+    kubernetesApps: true
+    kubernetesResources: true
+    kubernetesStorage: true
+    kubernetesSystem: true
+    kubeSchedulerAlerting: false
+    kubeSchedulerRecording: false
+    kubeStateMetrics: true
+    network: true
+    node: true
+    nodeExporterAlerting: true
+    nodeExporterRecording: true
+    prometheus: true
+    prometheusOperator: true
