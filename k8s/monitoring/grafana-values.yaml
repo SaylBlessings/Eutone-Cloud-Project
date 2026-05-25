@@ -1,0 +1,117 @@
+# ============================================================
+# Grafana — Helm values (Minikube)
+# Chart: grafana/grafana
+# ============================================================
+
+nameOverride: ""
+fullnameOverride: "grafana"
+
+replicas: 1
+
+# ---- Admin credentials — CHANGE before deploying ----
+adminUser: admin
+adminPassword: "ChangeMe!Grafana2024"   # Override with --set or a sealed secret
+
+# ---- Service ----
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3000
+
+# ---- Ingress is managed in ecommerce/ingress.yaml ----
+ingress:
+  enabled: false
+
+# ---- Persistence ----
+persistence:
+  enabled: true
+  storageClassName: standard   # Minikube default
+  accessModes:
+    - ReadWriteOnce
+  size: 5Gi
+
+# ---- Resources ----
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "300m"
+    memory: "256Mi"
+
+# ---- Security ----
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 472
+  fsGroup: 472
+
+# ---- Data Sources — auto-connect to Prometheus ----
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        url: http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+        access: proxy
+        isDefault: true
+        jsonData:
+          timeInterval: "30s"
+          httpMethod: POST
+
+# ---- Pre-loaded dashboards ----
+dashboardProviders:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers:
+      - name: "default"
+        orgId: 1
+        folder: "Ecommerce"
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/default
+
+dashboards:
+  default:
+    # Kubernetes cluster overview
+    kubernetes-cluster:
+      gnetId: 7249
+      revision: 1
+      datasource: Prometheus
+    # Node exporter full
+    node-exporter:
+      gnetId: 1860
+      revision: 37
+      datasource: Prometheus
+    # Kubernetes namespace resource usage
+    k8s-namespaces:
+      gnetId: 15758
+      revision: 1
+      datasource: Prometheus
+    # Nginx Ingress Controller
+    nginx-ingress:
+      gnetId: 9614
+      revision: 1
+      datasource: Prometheus
+
+# ---- SMTP alerting (optional — configure for email alerts) ----
+grafana.ini:
+  server:
+    root_url: "http://grafana.local"
+  analytics:
+    reporting_enabled: false
+    check_for_updates: false
+  security:
+    cookie_secure: false        # set true when TLS is terminated at ingress
+    cookie_samesite: lax
+    x_content_type_options: true
+    x_xss_protection: true
+  auth:
+    disable_login_form: false
+  users:
+    allow_sign_up: false
+  log:
+    mode: console
+    level: info

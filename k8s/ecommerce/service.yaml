@@ -1,0 +1,25 @@
+---
+# ============================================================
+# Service — ClusterIP (internal); Ingress routes external traffic
+# ============================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: ecommerce-service
+  namespace: ecommerce
+  labels:
+    app: ecommerce
+    tier: frontend
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "3000"
+spec:
+  type: ClusterIP
+  selector:
+    app: ecommerce
+    tier: frontend
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 3000

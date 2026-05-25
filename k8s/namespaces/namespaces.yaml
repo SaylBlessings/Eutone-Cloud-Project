@@ -1,0 +1,22 @@
+---
+# ============================================================
+# Namespaces
+# ============================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ecommerce
+  labels:
+    name: ecommerce
+    environment: production
+    managed-by: cloudgeni
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+  labels:
+    name: monitoring
+    environment: production
+    managed-by: cloudgeni
